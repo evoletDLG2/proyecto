@@ -16,7 +16,7 @@ const datos = {
 let usuarioActual = null;
 const PASSWORD = '1234';
 
-// Nombres exactos de tus archivos en GitHub
+// Nombres exactos de tus archivos en GitHub (Copiados de tu imagen)
 const ARCHIVO_ESTUDIANTES = 'Estudiantes_y_Roles.csv';
 const ARCHIVO_ACTIVIDADES = 'Actividades_Completas_Unico_Archivo.csv';
 const ARCHIVO_ADVERSIDADES = 'Adversidades_Directas.csv';
@@ -57,7 +57,7 @@ function loginAlumnoFunc() {
     if (!nombre) return alert('Escribe tu nombre');
 
     if (datos.estudiantes.length === 0) {
-        return alert('Las listas aún se están cargando desde el servidor. Intenta de nuevo en 3 segundos.');
+        return alert('Las listas aún se están cargando desde GitHub. Intenta de nuevo en unos segundos.');
     }
 
     const estudiante = datos.estudiantes.find(e => busquedaFuzzy(nombre, e.nombre));
@@ -94,14 +94,7 @@ function abrirPanelProfesor() {
     actualizarPanelProfesor();
 }
 
-function logout() {
-    usuarioActual = null;
-    document.getElementById('pantallaLogin').classList.remove('hidden');
-    document.getElementById('panelAlumno').classList.add('hidden');
-    document.getElementById('panelProfesor').classList.add('hidden');
-}
-
-// ============ NUEVA FUNCIÓN: CARGAR AUTOMÁTICAMENTE DESDE GITHUB ============
+// ============ CARGAR AUTOMÁTICAMENTE DESDE GITHUB ============
 async function cargarArchivosDesdeGitHub() {
     console.log("Iniciando carga automática de archivos CSV...");
     
@@ -142,7 +135,6 @@ function procesarContenidoCSV(tipo, contenido) {
         if (lineas.length === 0) return;
 
         if (tipo === 'estudiantes') {
-            // Mantener equipos existentes si ya se guardaron en localStorage
             const equiposPrevios = datos.estudiantes.reduce((acc, curr) => {
                 if (curr.equipoId) acc[curr.nombre] = curr;
                 return acc;
@@ -159,9 +151,7 @@ function procesarContenidoCSV(tipo, contenido) {
                     const rolesValidos = ['Líder', 'Comunicador', 'Ejecutor', 'Estratega', 'Motivador'];
                     
                     if (rolesValidos.includes(rol)) {
-                        // Si el alumno ya tenía progreso local, lo conservamos
                         const previo = equiposPrevios[nombre];
-                        
                         datos.estudiantes.push({
                             id: previo ? previo.id : Date.now() + i,
                             nombre: nombre,
@@ -209,12 +199,11 @@ function procesarContenidoCSV(tipo, contenido) {
 
         guardarDatos();
     } catch (error) {
-        console.error('Error procesando CSV automático:', error.message);
+        console.error('Error procesando CSV:', error.message);
     }
 }
 
-// (El resto de tus funciones se mantienen igual para no alterar tu juego)
-
+// Métodos manuales por si los necesitas en el panel de profesor
 let archivosTemp = {};
 function cargarCSV(tipo) {
     const input = document.getElementById(`csv${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
@@ -230,8 +219,15 @@ function cargarCSV(tipo) {
 function procesarCSV(tipo) {
     if (!archivosTemp[tipo]) return alert('Carga un archivo primero');
     procesarContenidoCSV(tipo, archivosTemp[tipo]);
-    alert(`✅ Procesado manual de ${tipo} completado.`);
+    alert(`✅ Procesado manual completado.`);
     if (tipo === 'estudiantes') actualizarPanelProfesor();
+}
+
+function logout() {
+    usuarioActual = null;
+    document.getElementById('pantallaLogin').classList.remove('hidden');
+    document.getElementById('panelAlumno').classList.add('hidden');
+    document.getElementById('panelProfesor').classList.add('hidden');
 }
 
 function actualizarPanelProfesor() {
@@ -369,7 +365,7 @@ function girarRuleta() {
 
     setTimeout(() => {
         const deVerdadActividades = datos.actividades.filter(a => a.id !== 999);
-        const actividad = de VerdadActividades[Math.floor(Math.random() * de VerdadActividades.length)] || datos.actividades[0];
+        const actividad = deVerdadActividades[Math.floor(Math.random() * deVerdadActividades.length)] || datos.actividades[0];
         const adversidad = datos.adversidades[Math.floor(Math.random() * datos.adversidades.length)];
 
         document.getElementById('actividadNombre').textContent = actividad.nombre;
@@ -395,23 +391,8 @@ function aceptarActividad() {
     alert('✅ ¡Aceptado! Se sumaron puntos');
 }
 
-function jalarLocalStorage() {
-    const guardados = localStorage.getItem('sistemaEquipos');
-    if (guardados) {
-        const locales = JSON.parse(guardados);
-        if (locales.equipos) datos.equipos = locales.equipos;
-        if (locales.estudiantes && datos.estudiantes.length > 0) {
-            // Sincronizar puntos guardados localmente
-            locales.estudiantes.forEach(lEst => {
-                const match = datos.estudiantes.find(e => e.nombre === lEst.nombre);
-                if (match) {
-                    match.puntosPersonales = lEst.puntosPersonales;
-                    match.equipoId = lEst.equipoId;
-                    match.pasos = lEst.pasos;
-                }
-            });
-        }
-    }
+function rechazarActividad() {
+    alert('❌ Sin problema, ¡para la próxima!');
 }
 
 function registrarPuntuacionProf() {
@@ -507,6 +488,7 @@ function cambiarTabProf(nombre) {
     if (nombre === 'resumen') actualizarResumenProf();
 }
 
+// ============ PANEL PROFESOR ============
 function actualizarEquiposProf() {
     const container = document.getElementById('equiposProfesor');
     if (!container) return;
@@ -552,9 +534,27 @@ function guardarDatos() {
     localStorage.setItem('sistemaEquipos', JSON.stringify(datos));
 }
 
-// NUEVA INICIALIZACIÓN COMPUESTA
+function jalarLocalStorage() {
+    const guardados = localStorage.getItem('sistemaEquipos');
+    if (guardados) {
+        const locales = JSON.parse(guardados);
+        if (locales.equipos) datos.equipos = locales.equipos;
+        if (locales.estudiantes && datos.estudiantes.length > 0) {
+            locales.estudiantes.forEach(lEst => {
+                const match = datos.estudiantes.find(e => e.nombre === lEst.nombre);
+                if (match) {
+                    match.puntosPersonales = lEst.puntosPersonales;
+                    match.equipoId = lEst.equipoId;
+                    match.pasos = lEst.pasos;
+                }
+            });
+        }
+    }
+}
+
+// NUEVA INICIALIZACIÓN COMPUESTA (FUSIONADA)
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Descargar los archivos CSV reales desde GitHub de forma asíncrona
+    // 1. Descargar los archivos CSV reales desde GitHub automáticamente
     await cargarArchivosDesdeGitHub();
     // 2. Traer el progreso guardado localmente en el dispositivo (puntos, equipos formados)
     jalarLocalStorage();
