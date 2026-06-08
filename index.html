@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Equipos - Actividad Física Interactiva</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ============ PANTALLA DE LOGIN ============ -->
+    <div id="pantallaLogin" class="pantalla-login">
+        <div class="contenedor-login">
+            <h1>⚡ SISTEMA DE EQUIPOS</h1>
+            <p>Trabajo en Equipo • Competencia • Logros</p>
+            
+            <div class="botones-login">
+                <button class="btn-login btn-alumno" onclick="mostrarLoginAlumno()">
+                    👨‍🎓 Soy Alumno
+                </button>
+                <button class="btn-login btn-profesor" onclick="mostrarLoginProfesor()">
+                    👨‍🏫 Soy Profesor
+                </button>
+            </div>
+
+            <!-- Login Alumno -->
+            <div id="loginAlumno" class="login-box hidden">
+                <input type="text" id="inputNombreAlumno" placeholder="Tu nombre completo" onkeypress="if(event.key==='Enter') loginAlumnoFunc()">
+                <button class="btn-confirmar" onclick="loginAlumnoFunc()">Continuar</button>
+                <button class="btn-volver" onclick="volverLogin()">Volver</button>
+            </div>
+
+            <!-- Login Profesor -->
+            <div id="loginProfesor" class="login-box hidden">
+                <input type="password" id="inputPasswordProfesor" placeholder="Contraseña" onkeypress="if(event.key==='Enter') loginProfesorFunc()">
+                <button class="btn-confirmar" onclick="loginProfesorFunc()">Verificar</button>
+                <button class="btn-volver" onclick="volverLogin()">Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PANEL ALUMNO ============ -->
+    <div id="panelAlumno" class="panel hidden">
+        <header class="header">
+            <h1 id="nombreAlumnoHeader">Cargando...</h1>
+            <div class="info-header">
+                <span class="rol-badge" id="rolBadge"></span>
+                <span class="puntos-header" id="puntosHeader">Pts: 0</span>
+            </div>
+            <button class="btn-salir" onclick="logout()">🚪</button>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="cambiarTab('fichas')">👥 Fichas</button>
+            <button class="tab-btn" onclick="cambiarTab('miEquipo')">🎯 Mi Equipo</button>
+            <button class="tab-btn" onclick="cambiarTab('ruleta')">🎡 Actividad</button>
+            <button class="tab-btn" onclick="cambiarTab('ranking')">🏆 Ranking</button>
+            <button class="tab-btn" onclick="cambiarTab('logros')">⭐ Logros</button>
+        </nav>
+
+        <!-- TAB: FICHAS -->
+        <div id="tabFichas" class="tab-content active">
+            <div class="seccion">
+                <h2>Selecciona compañeros para tu equipo</h2>
+                <input type="text" id="buscarCompanero" placeholder="🔍 Buscar compañero..." onkeyup="filtrarCompaneros()">
+                <div id="gridFichas" class="grid-fichas"></div>
+            </div>
+        </div>
+
+        <!-- TAB: MI EQUIPO -->
+        <div id="tabMiEquipo" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Mi Equipo</h2>
+                <div id="miEquipoContent" class="equipo-container"></div>
+            </div>
+        </div>
+
+        <!-- TAB: RULETA -->
+        <div id="tabRuleta" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Actividad del Momento</h2>
+                <div class="ruleta-box">
+                    <div class="ruleta"></div>
+                    <button class="btn-girar" onclick="girarRuleta()" id="btnGirar">Girar Ruleta</button>
+                </div>
+                <div id="actividadActual" class="actividad-resultado hidden">
+                    <h3 id="actividadNombre"></h3>
+                    <p id="actividadDescripcion"></p>
+                    <div class="botones-actividad">
+                        <button class="btn-aceptar" onclick="aceptarActividad()">✅ Aceptar</button>
+                        <button class="btn-rechazar" onclick="rechazarActividad()">❌ Rechazar</button>
+                    </div>
+                </div>
+                <div id="adversidadActual" class="adversidad-resultado hidden">
+                    <h3>⚠️ RETO ESPECIAL</h3>
+                    <p id="adversidadTexto"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: RANKING -->
+        <div id="tabRanking" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Tabla de Posiciones</h2>
+                <div id="tablaRanking" class="tabla-ranking"></div>
+            </div>
+        </div>
+
+        <!-- TAB: LOGROS -->
+        <div id="tabLogros" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Logros Desbloqueados</h2>
+                <div id="logrosGrid" class="logros-grid"></div>
+            </div>
+        </div>
+
+        <!-- MÓDULO SECRETO: PASOS -->
+        <div id="moduloPasos" class="modulo-secreto hidden">
+            <div class="caja-secreta">
+                <h3>👣 Mis Pasos Hoy</h3>
+                <input type="number" id="inputPasos" placeholder="0" min="0">
+                <button class="btn-registrar" onclick="registrarPasos()">Registrar</button>
+                <p>Total: <strong id="totalPasos">0</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PANEL PROFESOR ============ -->
+    <div id="panelProfesor" class="panel hidden">
+        <header class="header">
+            <h1>🎓 Control - Profesor</h1>
+            <button class="btn-salir" onclick="logout()">🚪</button>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="cambiarTabProf('cargar')">📊 Cargar</button>
+            <button class="tab-btn" onclick="cambiarTabProf('equipos')">👥 Equipos</button>
+            <button class="tab-btn" onclick="cambiarTabProf('actividades')">🎮 Actividades</button>
+            <button class="tab-btn" onclick="cambiarTabProf('puntuacion')">🎯 Puntuación</button>
+            <button class="tab-btn" onclick="cambiarTabProf('resumen')">📈 Resumen</button>
+        </nav>
+
+        <!-- TAB: CARGAR -->
+        <div id="tabCargar" class="tab-content active">
+            <div class="seccion">
+                <h2>Cargar Datos</h2>
+                
+                <div class="form-grupo">
+                    <label>Estudiantes (CSV: Nombre,Rol)</label>
+                    <input type="file" id="csvEstudiantes" accept=".csv" onchange="cargarCSV('estudiantes')">
+                    <button class="btn-primary" onclick="procesarCSV('estudiantes')">Cargar</button>
+                </div>
+
+                <div class="form-grupo">
+                    <label>Actividades (CSV: Nombre,Descripción)</label>
+                    <input type="file" id="csvActividades" accept=".csv" onchange="cargarCSV('actividades')">
+                    <button class="btn-primary" onclick="procesarCSV('actividades')">Cargar</button>
+                </div>
+
+                <div class="form-grupo">
+                    <label>Adversidades (CSV: Texto)</label>
+                    <input type="file" id="csvAdversidades" accept=".csv" onchange="cargarCSV('adversidades')">
+                    <button class="btn-primary" onclick="procesarCSV('adversidades')">Cargar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: EQUIPOS -->
+        <div id="tabEquipos" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Gestión de Equipos</h2>
+                <div id="equiposProfesor" class="equipos-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB: ACTIVIDADES -->
+        <div id="tabActividades" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Actividades</h2>
+                <div id="actividadesProfesor" class="actividades-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB: PUNTUACIÓN -->
+        <div id="tabPuntuacion" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Registrar Puntuación</h2>
+                
+                <div class="form-grupo">
+                    <label>Equipo</label>
+                    <select id="selectEquipo" class="input-profesor"></select>
+                </div>
+
+                <div class="form-grupo">
+                    <label>Puntos (personal)</label>
+                    <input type="number" id="inputPuntosPersonal" min="0" max="10">
+                </div>
+
+                <div class="form-grupo">
+                    <label>Puntos (equipo)</label>
+                    <input type="number" id="inputPuntosEquipo" min="0" max="10">
+                </div>
+
+                <button class="btn-primary" onclick="registrarPuntuacionProf()">Registrar</button>
+
+                <div id="historialPuntuacion" class="historial"></div>
+            </div>
+        </div>
+
+        <!-- TAB: RESUMEN -->
+        <div id="tabResumen" class="tab-content hidden">
+            <div class="seccion">
+                <h2>Resumen General</h2>
+                <div id="resumenGeneral" class="resumen"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
