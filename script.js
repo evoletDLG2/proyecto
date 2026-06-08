@@ -368,7 +368,7 @@ function girarRuleta() {
     }, 10);
 
     setTimeout(() => {
-        const de VerdadActividades = datos.actividades.filter(a => a.id !== 999);
+        const deVerdadActividades = datos.actividades.filter(a => a.id !== 999);
         const actividad = de VerdadActividades[Math.floor(Math.random() * de VerdadActividades.length)] || datos.actividades[0];
         const adversidad = datos.adversidades[Math.floor(Math.random() * datos.adversidades.length)];
 
