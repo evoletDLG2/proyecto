@@ -1,8 +1,3 @@
-// ============================================================================
-// SISTEMA DE EQUIPOS v2.0 - VERSIÓN MEJORADA (MÓVIL & GITHUB PAGES)
-// ============================================================================
-
-// DATOS GLOBALES
 const datos = {
     estudiantes: [],
     equipos: [],
@@ -14,17 +9,36 @@ const datos = {
 };
 
 let usuarioActual = null;
-const PASSWORD = '1234';
+const PASSWORD = '12345';
 
-// Nombres exactos de tus archivos en GitHub (Copiados de tu imagen)
 const ARCHIVO_ESTUDIANTES = 'Estudiantes_y_Roles.csv';
 const ARCHIVO_ACTIVIDADES = 'Actividades_Completas_Unico_Archivo.csv';
 const ARCHIVO_ADVERSIDADES = 'Adversidades_Directas.csv';
 
-// ============ BÚSQUEDA FUZZY ============
+// Búsqueda inteligente que limpia acentos y caracteres especiales
+function limpiarTextoParaComparar(texto) {
+    return texto.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
+// Verifica si dos nombres tienen las mismas palabras sin importar el orden
+function compararNombresFlexibles(nombreInput, nombreCSV) {
+    const inputLimpio = limpiarTextoParaComparar(nombreInput);
+    const csvLimpio = limpiarTextoParaComparar(nombreCSV);
+
+    const palabrasInput = inputLimpio.split(/\s+/).filter(Boolean);
+    const palabrasCSV = csvLimpio.split(/\s+/).filter(Boolean);
+
+    if (palabrasInput.length !== palabrasCSV.length) return false;
+
+    return palabrasInput.every(palabra => palabrasCSV.includes(palabra));
+}
+
 function busquedaFuzzy(patron, texto) {
-    patron = patron.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    texto = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    patron = limpiarTextoParaComparar(patron);
+    texto = limpiarTextoParaComparar(texto);
     
     let patronIdx = 0;
     for (let i = 0; i < texto.length; i++) {
@@ -36,7 +50,6 @@ function busquedaFuzzy(patron, texto) {
     return false;
 }
 
-// ============ LOGIN ============
 function mostrarLoginAlumno() {
     document.getElementById('loginAlumno').classList.remove('hidden');
     document.getElementById('loginProfesor').classList.add('hidden');
@@ -52,6 +65,7 @@ function volverLogin() {
     document.getElementById('loginProfesor').classList.add('hidden');
 }
 
+// SOLUCIÓN AL INICIO DE SESIÓN CON APELLIDOS AL REVÉS
 function loginAlumnoFunc() {
     const nombre = document.getElementById('inputNombreAlumno').value.trim();
     if (!nombre) return alert('Escribe tu nombre');
@@ -60,7 +74,13 @@ function loginAlumnoFunc() {
         return alert('Las listas aún se están cargando desde GitHub. Intenta de nuevo en unos segundos.');
     }
 
-    const estudiante = datos.estudiantes.find(e => busquedaFuzzy(nombre, e.nombre));
+    // Primero intenta buscar una coincidencia exacta de palabras desordenadas (Flexible)
+    let estudiante = datos.estudiantes.find(e => compararNombresFlexibles(nombre, e.nombre));
+    
+    // Si no encuentra por coincidencia exacta de palabras, usa la búsqueda fuzzy aproximada tradicional
+    if (!estudiante) {
+        estudiante = datos.estudiantes.find(e => busquedaFuzzy(nombre, e.nombre));
+    }
     
     if (!estudiante) {
         return alert('Nombre no encontrado. Verifica la ortografía.');
@@ -85,6 +105,7 @@ function abrirPanelAlumno() {
     document.getElementById('nombreAlumnoHeader').textContent = usuarioActual.nombre;
     document.getElementById('rolBadge').textContent = usuarioActual.rol;
     actualizarPuntos();
+    actualizarMiEquipo(); // Asegura cargar el estado real del equipo al entrar
     mostrarFichas();
 }
 
@@ -203,7 +224,6 @@ function procesarContenidoCSV(tipo, contenido) {
     }
 }
 
-// Métodos manuales por si los necesitas en el panel de profesor
 let archivosTemp = {};
 function cargarCSV(tipo) {
     const input = document.getElementById(`csv${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
@@ -309,6 +329,9 @@ function invitarAlEquipo(estudianteId) {
         actualizarMiEquipo();
         mostrarFichas();
         guardarDatos();
+    } else {
+        // Si ya tiene un equipo iniciado pero tiene espacio, lo agrega directamente
+        agregarMiembroAlEquipo(estudianteId);
     }
 }
 
@@ -324,10 +347,28 @@ function agregarMiembroAlEquipo(estudianteId) {
     guardarDatos();
 }
 
+// SOLUCIÓN PARA DESTRABAR A ARTURO (MANEJO DE EQUIPOS DE 1 PERSONA)
 function actualizarMiEquipo() {
     const container = document.getElementById('miEquipoContent');
     if (!container) return;
-    const equipo = datos.equipos.find(e => e.id === usuarioActual.equipoId);
+    
+    let equipo = datos.equipos.find(e => e.id === usuarioActual.equipoId);
+
+    // Si el usuario no tiene una id de equipo en la base de datos, pero está logueado solo,
+    // creamos de manera automatizada su entorno de reclutamiento para que no quede flotando.
+    if (!equipo && usuarioActual.id) {
+        container.innerHTML = `
+            <p>Sin equipo oficial aún.</p>
+            <div class="equipo-container">
+                <div class="miembro-equipo" style="border: 2px dashed #4ECDC4;">
+                    <div class="miembro-equipo-nombre">${usuarioActual.nombre}</div>
+                    <div class="miembro-equipo-rol">${usuarioActual.rol}</div>
+                </div>
+                <div class="agregar-miembro" onclick="mostrarFichas(); cambiarTab('fichas')">➕ Invitar Compañeros</div>
+            </div>
+        `;
+        return;
+    }
 
     if (!equipo) {
         container.innerHTML = '<p>Sin equipo aún. Ve a "Fichas" para invitar compañeros.</p>';
@@ -385,13 +426,16 @@ function aceptarActividad() {
     if (equipo) {
         equipo.puntosEquipo += 5;
         usuarioActual.puntosPersonales += 3;
+    } else {
+        // Si el estudiante todavía está solo, acumula sus puntos personales individuales
+        usuarioActual.puntosPersonales += 3;
     }
     actualizarPuntos();
     guardarDatos();
     alert('✅ ¡Aceptado! Se sumaron puntos');
 }
 
-function rechazarActividad() {
+function實rechazarActividad() {
     alert('❌ Sin problema, ¡para la próxima!');
 }
 
@@ -552,10 +596,7 @@ function jalarLocalStorage() {
     }
 }
 
-// NUEVA INICIALIZACIÓN COMPUESTA (FUSIONADA)
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Descargar los archivos CSV reales desde GitHub automáticamente
     await cargarArchivosDesdeGitHub();
-    // 2. Traer el progreso guardado localmente en el dispositivo (puntos, equipos formados)
     jalarLocalStorage();
 });
