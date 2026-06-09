@@ -9,7 +9,7 @@ const datos = {
 };
 
 let usuarioActual = null;
-const PASSWORD = '12345';
+const PASSWORD = '1234';
 
 const ARCHIVO_ESTUDIANTES = 'Estudiantes_y_Roles.csv';
 const ARCHIVO_ACTIVIDADES = 'Actividades_Completas_Unico_Archivo.csv';
